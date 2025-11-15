@@ -1,0 +1,12 @@
+64 bit:
+0x00000400 - 0x0006ffff (free)
+0x00070000 - 0x00070fff (taken - PML4T)
+0x00071000 - 0x00071fff (taken - PDPT)
+0x00072000 - 0x00072fff (taken - PDT)
+0x00073000 - 0x0007ffff (taken - Page Tables)
+
+32 bit:
+0x00000400 - 0x00071fff (free)
+0x00071000 - 0x00071fff (taken - PDPT) (with PAE)
+0x00072000 - 0x00072fff (taken - PDT)
+0x00073000 - 0x0007ffff (taken - Page Tables)

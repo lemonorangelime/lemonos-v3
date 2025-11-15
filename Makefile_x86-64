@@ -1,0 +1,70 @@
+BUILD_DIR := build_x86-64
+
+ARCH := x86-64
+OUTPUT := $(ARCH)_kernel.bin
+ASM_EXT := asm
+OUTPUT_IMG := $(ARCH)_lemonos.iso
+
+S := gcc
+ASM := nasm
+ASMFLAGS := -f elf64
+
+CC := gcc
+CCFLAGS := -s -Ofast -mgeneral-regs-only -fno-asynchronous-unwind-tables -Qn -mhard-float -static -m64 -fno-builtin -fno-builtin-function -fno-stack-protector -fomit-frame-pointer -falign-functions=16 -nostdlib -nostdinc -Iinclude -Iarch/$(ARCH)/include -Wno-address-of-packed-member -ffunction-sections -Wl,--gc-sections -z noexecstack -z noseparate-code
+
+AR := ar
+
+LD := ld
+LDFLAGS := --nmagic -m elf_x86_64 --strip-all --discard-all --discard-locals --strip-debug
+
+MAKE := make
+
+GRUB := grub-mkrescue
+GRUBFLAGS := --compress=xz
+GRUBSRC := src/grub/*
+
+STRUCTURE := $(shell find src/ -type d)
+FILES := $(addsuffix /*,$(STRUCTURE))
+FILES := $(wildcard $(FILES))
+SOURCES := $(filter %.c,$(FILES))
+
+ARCH_STRUCTURE := $(shell find arch/$(ARCH)/src/ -type d)
+ARCH_FILES := $(addsuffix /*,$(ARCH_STRUCTURE))
+ARCH_FILES := $(wildcard $(ARCH_FILES))
+ARCH_SOURCES := $(filter %.c,$(ARCH_FILES))
+ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
+
+OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ARCH_SOURCES:%.c=%.c.o))
+ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
+
+BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE))
+
+default: mkdir build grub
+
+mkdir:
+	mkdir -p ${BUILD_DIR} ${BUILD_STRUCTURE}
+
+clean:
+	rm -rf ${BUILD_DIR} ${OUTPUT} ${GRUBDST}
+
+grub: $(OUTPUT)
+	mkdir -p ${BUILD_DIR}/grub/
+	mkdir -p ${BUILD_DIR}/grub/boot/
+	mkdir -p ${BUILD_DIR}/grub/boot/grub/
+	cp ${OUTPUT} ${BUILD_DIR}/grub/boot/kernel.bin
+	cp -r ${GRUBSRC} ${BUILD_DIR}/grub/boot/grub/
+	${GRUB} ${GRUBFLAGS} -o ${OUTPUT_IMG} ${BUILD_DIR}/grub/
+
+$(BUILD_DIR)/%.c.o: src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/%.c.o: arch/$(ARCH)/src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
+	$(ASM) $(ASMFLAGS) $^ -o $@
+
+build: $(OBJS) $(ASM_OBJS)
+	$(LD) $(LDFLAGS) -T arch/$(ARCH)/src/link.ld -o $(OUTPUT) $^
+	objcopy --remove-section .note --remove-section .note.gnu.property --remove-section .note.ABI-tag --remove-section .hash --remove-section .gnu.hash --remove-section .gnu.version --remove-section .comment --remove-section .eh_frame_hdr --remove-section .eh_frame $(OUTPUT)
+	strip --strip-all --strip-section-headers --strip-unneeded --strip-debug $(OUTPUT)
