@@ -1,6 +1,6 @@
-build/
-build/*
-build
+build_*/
+build_*/*
+build_*
 *.iso
 *.img
 *.bin
