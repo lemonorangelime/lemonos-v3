@@ -33,7 +33,7 @@ ARCH_FILES := $(wildcard $(ARCH_FILES))
 ARCH_SOURCES := $(filter %.c,$(ARCH_FILES))
 ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
 
-OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ARCH_SOURCES:%.c=%.c.o))
+OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_SOURCES:%.c=%.c.o))
 ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
 
 BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_STRUCTURE))
