@@ -1,6 +1,5 @@
-BUILD_DIR := build_x86-64
-
 ARCH := x86-64
+BUILD_DIR := build_$(ARCH)
 OUTPUT := $(ARCH)_kernel.bin
 ASM_EXT := asm
 OUTPUT_IMG := $(ARCH)_lemonos.iso
@@ -37,7 +36,7 @@ ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
 OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ARCH_SOURCES:%.c=%.c.o))
 ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
 
-BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE))
+BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_STRUCTURE))
 
 default: mkdir build grub
 
