@@ -65,5 +65,5 @@ $(BUILD_DIR)/arch/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
 
 build: $(OBJS) $(ASM_OBJS)
 	$(LD) $(LDFLAGS) -T arch/$(ARCH)/src/link.ld -o $(OUTPUT) $^
-	objcopy --remove-section .note --remove-section .note.gnu.property --remove-section .note.ABI-tag --remove-section .hash --remove-section .gnu.hash --remove-section .gnu.version --remove-section .comment --remove-section .eh_frame_hdr --remove-section .eh_frame $(OUTPUT)
-	strip --strip-all --strip-section-headers --strip-unneeded --strip-debug $(OUTPUT)
+	#objcopy --remove-section .note --remove-section .note.gnu.property --remove-section .note.ABI-tag --remove-section .hash --remove-section .gnu.hash --remove-section .gnu.version --remove-section .comment --remove-section .eh_frame_hdr --remove-section .eh_frame $(OUTPUT)
+	#strip --strip-all --strip-section-headers --strip-unneeded --strip-debug $(OUTPUT)
