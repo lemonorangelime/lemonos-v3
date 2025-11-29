@@ -34,13 +34,14 @@ ARCH_SOURCES := $(filter %.c,$(ARCH_FILES))
 ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
 
 OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_SOURCES:%.c=%.c.o))
-ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
+ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
 
 BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_STRUCTURE))
 
 default: mkdir build grub
 
 mkdir:
+	echo ${ARCH_SOURCES}
 	mkdir -p ${BUILD_DIR} ${BUILD_STRUCTURE}
 
 clean:
@@ -57,10 +58,10 @@ grub: $(OUTPUT)
 $(BUILD_DIR)/%.c.o: src/%.c
 	$(CC) $(CCFLAGS) $^ -c -o $@
 
-$(BUILD_DIR)/%.c.o: arch/$(ARCH)/src/%.c
+$(BUILD_DIR)/arch/%.c.o: arch/$(ARCH)/src/%.c
 	$(CC) $(CCFLAGS) $^ -c -o $@
 
-$(BUILD_DIR)/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
+$(BUILD_DIR)/arch/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
 	$(ASM) $(ASMFLAGS) $^ -o $@
 
 build: $(OBJS) $(ASM_OBJS)
