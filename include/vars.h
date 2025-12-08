@@ -1,5 +1,1 @@
 #pragma once
-
-#define PML4T_ADDRESS 0x00070000
-#define PDPT_ADDRESS 0x00071000
-#define PDT_ADDRESS 0x00072000

@@ -34,20 +34,16 @@ typedef struct {
 	uint32_t address : 20;
 } __attribute__((packed)) page_entry32_t;
 
-static page_entry_t * pml4t = (page_entry_t *) PML4T_ADDRESS;
-static page_entry_t * pdpt = (page_entry_t *) PDPT_ADDRESS;
-static page_entry_t * pdt = (page_entry_t *) PDT_ADDRESS;
-
-static page_entry32_t * pdt32 = (page_entry32_t *) PDT_ADDRESS;
-
-extern int pae_supported;
-
 // mmu.asm
 void invalidate_page(void * p);
 
 // mmu.c
+int mmu_is_supported();
 void * mmu_page_table_unwind(void * table, int index);
 void * mmu_page_table_unwind_all(void * table, uint64_t address);
 uint64_t mmu_get_phys_addr(void * p);
 int mmu_map_page(void * to, uint64_t from);
 int mmu_is_page_mapped(void * p);
+
+void * mmu_alloc_page();
+int mmu_free_page(void * page);

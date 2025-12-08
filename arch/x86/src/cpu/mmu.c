@@ -1,6 +1,7 @@
 // am i doing this right?
 
 #include <hw/serial.h>
+#include <machine.h>
 #include <cpu/mmu.h>
 #include <stdint.h>
 #include <stddef.h>

@@ -1,0 +1,66 @@
+ARCH := arm-gba
+BUILD_DIR := build_$(ARCH)
+OUTPUT := $(ARCH)_kernel.bin
+ASM_EXT := S
+OUTPUT_IMG := $(ARCH)_lemonos.iso
+QEMUFLAGS := -2
+
+BIOS_OUTPUT := $(ARCH)_bios.bin
+
+OBJCOPY := arm-none-eabi-objcopy
+
+S := gcc
+ASM := arm-none-eabi-as
+ASMFLAGS := 
+
+CC := arm-none-eabi-gcc
+CCFLAGS := -s -Ofast -static -fno-stack-protector -fomit-frame-pointer -nostdlib -nostdinc -ffreestanding -Iinclude -Iarch/$(ARCH)/include -Wno-address-of-packed-member -ffunction-sections -z noexecstack -z noseparate-code
+
+AR := ar
+
+LD := arm-none-eabi-ld
+LDFLAGS := -nostdlib
+
+MAKE := make
+
+STRUCTURE := $(shell find src/ -type d)
+FILES := $(addsuffix /*,$(STRUCTURE))
+FILES := $(wildcard $(FILES))
+SOURCES := $(filter %.c,$(FILES))
+
+ARCH_STRUCTURE := $(shell find arch/$(ARCH)/src/ -type d)
+ARCH_FILES := $(addsuffix /*,$(ARCH_STRUCTURE))
+ARCH_FILES := $(wildcard $(ARCH_FILES))
+ARCH_SOURCES := $(filter %.c,$(ARCH_FILES))
+ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
+
+OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_SOURCES:%.c=%.c.o))
+ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
+
+BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_STRUCTURE))
+
+default: mkdir build
+
+mkdir:
+	mkdir -p ${BUILD_DIR} ${BUILD_STRUCTURE}
+
+clean:
+	rm -rf ${BUILD_DIR} ${OUTPUT} $(BIOS_OUTPUT) roms/gba/$(BIOS_OUTPUT)
+
+qemu:
+	mgba $(QEMUFLAGS) $(OUTPUT)
+
+$(BUILD_DIR)/%.c.o: src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/arch/%.c.o: arch/$(ARCH)/src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/arch/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
+	$(ASM) $(ASMFLAGS) $^ -o $@
+
+build: $(OBJS) $(ASM_OBJS)
+	$(LD) $(LDFLAGS) -T arch/$(ARCH)/src/link.ld -o $(OUTPUT) $^
+	$(OBJCOPY) -O binary $(OUTPUT)
+	#objcopy --remove-section .note --remove-section .note.gnu.property --remove-section .note.ABI-tag --remove-section .hash --remove-section .gnu.hash --remove-section .gnu.version --remove-section .comment --remove-section .eh_frame_hdr --remove-section .eh_frame $(OUTPUT)
+	#strip --strip-all --strip-section-headers --strip-unneeded --strip-debug $(OUTPUT)

@@ -47,7 +47,7 @@ extern pae_supported
 
 global start
 extern start
-extern main
+extern __bootup
 start:
 	cli
 	clts
@@ -132,7 +132,7 @@ pm32:
 	mov gs, ax
 	mov ss, ax
 
-	call main
+	call __bootup
 	cli
 halt:
 	hlt

@@ -1,0 +1,67 @@
+ARCH := ppc-gamecube
+BUILD_DIR := build_$(ARCH)
+OUTPUT := $(ARCH)_kernel.bin
+ASM_EXT := S
+OUTPUT_DOL := $(ARCH)_kernel.dol
+OUTPUT_IMG := $(ARCH)_lemonos.iso
+QEMUFLAGS := -boot dca -serial stdio
+
+OBJCOPY := powerpc-linux-gnu-objcopy
+
+S := gcc
+ASM := powerpc-linux-gnu-as
+ASMFLAGS := 
+
+CC := powerpc-linux-gnu-gcc
+CCFLAGS := -s -Ofast -static -fno-stack-protector -fomit-frame-pointer -nostdlib -nostdinc -ffreestanding -Iinclude -Iarch/$(ARCH)/include -Wno-address-of-packed-member -ffunction-sections -z noexecstack -z noseparate-code
+
+AR := ar
+
+LD := powerpc-linux-gnu-ld
+LDFLAGS := -nostdlib
+
+MAKE := make
+
+STRUCTURE := $(shell find src/ -type d)
+FILES := $(addsuffix /*,$(STRUCTURE))
+FILES := $(wildcard $(FILES))
+SOURCES := $(filter %.c,$(FILES))
+
+ARCH_STRUCTURE := $(shell find arch/$(ARCH)/src/ -type d)
+ARCH_FILES := $(addsuffix /*,$(ARCH_STRUCTURE))
+ARCH_FILES := $(wildcard $(ARCH_FILES))
+ARCH_SOURCES := $(filter %.c,$(ARCH_FILES))
+ASM_SOURCES := $(filter %.$(ASM_EXT),$(ARCH_FILES))
+
+OBJS := $(subst src/,$(BUILD_DIR)/,$(SOURCES:%.c=%.c.o)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_SOURCES:%.c=%.c.o))
+ASM_OBJS := $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ASM_SOURCES:%.$(ASM_EXT)=%.$(ASM_EXT).o))
+
+BUILD_STRUCTURE := $(subst src/,$(BUILD_DIR)/,$(STRUCTURE)) $(subst arch/$(ARCH)/src/,$(BUILD_DIR)/arch/,$(ARCH_STRUCTURE))
+
+default: mkdir build
+
+mkdir:
+	mkdir -p ${BUILD_DIR} ${BUILD_STRUCTURE}
+
+clean:
+	rm -rf ${BUILD_DIR} ${OUTPUT} ${OUTPUT_DOL} ${OUTPUT_IMG}
+
+qemu:
+	dolphin-emu $(OUTPUT_IMG)
+
+$(BUILD_DIR)/%.c.o: src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/arch/%.c.o: arch/$(ARCH)/src/%.c
+	$(CC) $(CCFLAGS) $^ -c -o $@
+
+$(BUILD_DIR)/arch/%.$(ASM_EXT).o: arch/$(ARCH)/src/%.$(ASM_EXT)
+	$(ASM) $(ASMFLAGS) $^ -o $@
+
+build: $(OBJS) $(ASM_OBJS)
+	$(LD) $(LDFLAGS) -T arch/$(ARCH)/src/link.ld -o $(OUTPUT) $^
+	elf2dol $(OUTPUT) $(OUTPUT_DOL)
+	D=$$(mktemp -d); \
+	cp $(OUTPUT_DOL) $${D}/bootldr.dol; \
+	mkisofs -input-charset iso8859-1 -R -J -G roms/gamecube/header.iso -no-emul-boot -b bootldr.dol -o $(OUTPUT_IMG) $${D}/; \
+	rm -rf $${D}

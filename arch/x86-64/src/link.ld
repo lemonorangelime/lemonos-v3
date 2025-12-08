@@ -9,8 +9,15 @@ SECTIONS
 			. = ALIGN(8);
 			*(.text)
 		}
-		.data :{ *(.data) }
 		.bss : { *(.bss) }
+		.data :{
+			*(.data)
+		}
+		.modules : {
+			__modsym = .;
+			*(.modules)
+			__modsym_end = .;
+		}
 	}
 _kernel_end = ALIGN(8);
 _kernel_size = _kernel_end - _kernel_start;

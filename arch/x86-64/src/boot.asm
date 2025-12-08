@@ -56,7 +56,7 @@ no_long_mode:
 
 global start
 extern start
-extern main
+extern __bootup
 start:
 	cli
 	clts
@@ -131,7 +131,7 @@ bits 64
 	mov esi, DWORD [rsp]
 	add rsp, 4
 
-	call main
+	call __bootup
 	cli
 halt:
 	hlt

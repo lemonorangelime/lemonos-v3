@@ -4,3 +4,9 @@ build_*
 *.iso
 *.img
 *.bin
+*.BIN
+*.log
+*.sav
+*.o
+*.so
+*.elf

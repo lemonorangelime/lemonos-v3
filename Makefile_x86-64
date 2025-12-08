@@ -3,6 +3,7 @@ BUILD_DIR := build_$(ARCH)
 OUTPUT := $(ARCH)_kernel.bin
 ASM_EXT := asm
 OUTPUT_IMG := $(ARCH)_lemonos.iso
+QEMUFLAGS := -boot dca -serial stdio
 
 S := gcc
 ASM := nasm
@@ -45,7 +46,7 @@ mkdir:
 	mkdir -p ${BUILD_DIR} ${BUILD_STRUCTURE}
 
 clean:
-	rm -rf ${BUILD_DIR} ${OUTPUT} ${GRUBDST}
+	rm -rf ${BUILD_DIR} ${OUTPUT} ${OUTPUT_IMG}
 
 grub: $(OUTPUT)
 	mkdir -p ${BUILD_DIR}/grub/
@@ -54,6 +55,9 @@ grub: $(OUTPUT)
 	cp ${OUTPUT} ${BUILD_DIR}/grub/boot/kernel.bin
 	cp -r ${GRUBSRC} ${BUILD_DIR}/grub/boot/grub/
 	${GRUB} ${GRUBFLAGS} -o ${OUTPUT_IMG} ${BUILD_DIR}/grub/
+
+qemu:
+	qemu-system-x86_64 $(QEMUFLAGS) -m 64m -vga std -cpu host --enable-kvm -machine acpi=on -net nic,model=rtl8139,netdev=rtl8139 -netdev user,id=rtl8139 -drive file=$(OUTPUT_IMG),index=0,media=disk,format=raw
 
 $(BUILD_DIR)/%.c.o: src/%.c
 	$(CC) $(CCFLAGS) $^ -c -o $@

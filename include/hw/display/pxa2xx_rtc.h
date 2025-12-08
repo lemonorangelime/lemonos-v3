@@ -1,0 +1,8 @@
+#pragma once
+
+enum {
+	PXA2XX_RTC_COUNTER = 0x00,
+	PXA2XX_RTC_ALARM = 0x04,
+	PXA2XX_RTC_STATUS = 0x08,
+	PXA2XX_RTC_TRIM = 0x0c,
+};

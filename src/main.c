@@ -2,6 +2,10 @@
 #include <cpu/mmu.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <interrupts.h>
+#include <platform.h>
+#include <machine.h>
+#include <module.h>
 
 int test_mapping(uintptr_t address) {
 	void * p = (void *) address;
@@ -20,17 +24,31 @@ int test_mapping(uintptr_t address) {
 }
 
 // mmu_is_page_mapped
-int main(uint32_t eax, uint32_t ebx) {
-	serial_print((sizeof(void *) == 8) ? "Hello from long mode!!!\n" : "Hello from 32 bit mode!!!\n");
-	if (sizeof(void *) == 4) {
-		serial_print(pae_supported ? "PAE supported\n\n" : "PAE unsupported\n\n");
-	}
+int main() {
+	serial_init();
+	module_init();
+	// interrupts_init();
+
+	#if defined(__X86)
+		serial_print((sizeof(void *) == 8) ? "Hello from x86-64!!!\n" : "Hello from x86!!!\n");
+	#elif defined(__RISCV)
+		serial_print((sizeof(void *) == 8) ? "Hello from RISCv64!!!\n" : "Hello from RISCv32!!!\n");
+	#elif defined(__ARM)
+		serial_print((sizeof(void *) == 8) ? "Hello from ARM 64!!!\n" : "Hello from ARM 32!!!\n");
+	#elif defined(__M68K)
+		serial_print("Hello from M68K!!!\n");
+	#endif
+	serial_print("Running on machine: ");
+	serial_print(MACHINE_NAME);
+	serial_print("\n");
 
 	volatile uint64_t * test_page = (uint64_t *) 0x000000ull;
 	while (test_mapping((uintptr_t) test_page)) {
 		test_page += 0x100000ull >> 3ull;
 	}
-	test_page -= 0x200000ull >> 3ull; // we can't yet allocate pages so we have to make sure this is a valid page
+	if ((uintptr_t) test_page >= 0x200000ull) {
+		test_page -= 0x200000ull >> 3ull; // we can't yet allocate pages so we have to make sure this is a valid page
+	}
 
 	serial_print("\nMapping ");
 	serial_print_hex((uintptr_t) test_page);
@@ -40,8 +58,8 @@ int main(uint32_t eax, uint32_t ebx) {
 	test_mapping((uintptr_t) test_page);
 
 	int match = 1;
-	uint8_t * from = (uint8_t *) test_page;
-	uint8_t * to = (uint8_t *) 0x1000;
+	volatile uint8_t * from = (volatile uint8_t *) test_page;
+	volatile uint8_t * to = (volatile uint8_t *) 0x1000;
 	from[0] = 0x80; to[0] = 0x12;
 	from[1] = 0xff; to[1] = 0x34;
 	from[2] = 0x78; to[2] = 0x56;
@@ -54,7 +72,9 @@ int main(uint32_t eax, uint32_t ebx) {
 			break;
 		}
 	}
-	if (match) {
+
+	from[0xff] = 0xff; to[0xff] = 0xff;
+	if (match && from[0xff] == 0xff && to[0xff] == 0xff) {
 		serial_print("Pages ");
 		serial_print_hex((uintptr_t) test_page);
 		serial_print(" and 0x001000 match; PAGING WORKING\n");
@@ -64,6 +84,7 @@ int main(uint32_t eax, uint32_t ebx) {
 		serial_print(" and 0x001000 don't match\n");
 	}
 
+	#if defined(__X86)
 	if (sizeof(void *) == 4) {
 		if (!mmu_map_page((void *) test_page, 0x10000f000)) {
 			serial_print("\nMapping error; PAE test failed\n");
@@ -82,6 +103,7 @@ int main(uint32_t eax, uint32_t ebx) {
 			}
 		}
 	}
+	#endif
 
-	return 0;
+	while (1) {}
 }
